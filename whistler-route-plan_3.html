@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Whistler Bike Park — Routed Trail Plan</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { height:100%; }
+  body { background:#0e1512; color:#F0EBE3; font-family:'DM Sans',sans-serif; -webkit-font-smoothing:antialiased; }
+
+  .topbar { position:sticky; top:0; z-index:60; background:rgba(14,21,18,0.96); backdrop-filter:blur(12px); border-bottom:1px solid rgba(212,169,106,0.2); display:flex; align-items:center; height:52px; padding:0 16px; gap:12px; }
+  .logo { font-family:'Bebas Neue',sans-serif; font-size:21px; letter-spacing:0.07em; color:#D4A96A; line-height:1; }
+  .logo small { display:block; font-family:'DM Mono',monospace; font-size:8px; letter-spacing:0.16em; color:rgba(212,169,106,0.55); margin-top:1px; }
+  .topbar-cta { margin-left:auto; }
+  .big-tf { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.04em; background:#2563EB; color:#fff; text-decoration:none; padding:9px 13px; border-radius:8px; display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
+
+  .wrap { max-width:820px; margin:0 auto; padding:16px 14px 64px; }
+
+  .sandbox-note { display:none; background:#3a2a12; border:1px solid rgba(212,169,106,0.4); border-radius:10px; padding:12px 14px; margin-bottom:14px; font-size:13px; line-height:1.5; color:#F0E0C0; }
+  .sandbox-note strong { color:#FFD98A; }
+  body.in-frame .sandbox-note { display:block; }
+
+  /* MAP */
+  .map-card { position:relative; border-radius:14px; overflow:hidden; border:1px solid rgba(212,169,106,0.25); background:#0a0f0c; }
+  .map-frame-h { position:relative; width:100%; height:52vh; min-height:340px; }
+  .map-frame-h iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
+  .map-fallback { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; padding:30px; background:linear-gradient(135deg,#15241b,#0e1512); }
+  .map-fallback .mf-icon { font-size:38px; }
+  .map-fallback h3 { font-family:'Bebas Neue',sans-serif; font-size:23px; letter-spacing:0.04em; }
+  .map-fallback p { font-size:13px; color:rgba(255,255,255,0.6); max-width:340px; line-height:1.55; }
+  .map-fallback a { font-family:'DM Mono',monospace; font-size:12px; background:#2563EB; color:#fff; text-decoration:none; padding:11px 18px; border-radius:9px; }
+  .map-3d-cta { display:flex; flex-wrap:wrap; align-items:center; gap:10px; justify-content:space-between; background:linear-gradient(135deg,rgba(123,80,160,0.18),rgba(60,40,90,0.2)); border:1px solid rgba(180,140,220,0.35); border-radius:11px; padding:11px 14px; margin:10px 0 4px; }
+  .map-3d-cta span { font-size:11.5px; color:rgba(255,255,255,0.6); line-height:1.45; flex:1; min-width:200px; }
+  .map-3d-cta a { font-family:'DM Mono',monospace; font-size:12px; white-space:nowrap; background:rgba(180,140,220,0.25); border:1px solid rgba(180,140,220,0.5); color:#e8d8f8; text-decoration:none; padding:10px 15px; border-radius:9px; }
+  .map-caption { font-family:'DM Mono',monospace; font-size:10px; color:rgba(255,255,255,0.4); text-align:center; padding:8px 4px 0; letter-spacing:0.04em; }
+
+  /* DAY FILTER */
+  .day-filter { display:flex; gap:6px; margin:18px 0 14px; overflow-x:auto; scrollbar-width:none; }
+  .day-filter::-webkit-scrollbar { display:none; }
+  .day-tab { flex:1 0 auto; font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.05em; text-transform:uppercase; padding:9px 14px; border-radius:22px; border:1px solid rgba(255,255,255,0.18); background:transparent; color:rgba(255,255,255,0.55); cursor:pointer; white-space:nowrap; transition:all .18s; min-width:80px; text-align:center; }
+  .day-tab.active { font-weight:600; }
+  .day-tab[data-day="1"].active { background:#3D6B8A; color:#fff; border-color:#3D6B8A; }
+  .day-tab[data-day="2"].active { background:#4A7C59; color:#fff; border-color:#4A7C59; }
+  .day-tab[data-day="3"].active { background:#C17A3A; color:#fff; border-color:#C17A3A; }
+
+  /* DAY PANEL */
+  .day-panel { display:none; }
+  .day-panel.active { display:block; }
+  .day-head { display:flex; align-items:baseline; gap:10px; margin-bottom:4px; flex-wrap:wrap; }
+  .day-head h2 { font-family:'Bebas Neue',sans-serif; font-size:30px; letter-spacing:0.03em; line-height:1; }
+  .day-head .zone-label { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.06em; padding:3px 10px; border-radius:20px; }
+  .day-intro { font-size:13px; color:rgba(255,255,255,0.6); line-height:1.5; margin-bottom:18px; }
+
+  /* ROUTE TIMELINE */
+  .route { position:relative; padding-left:34px; }
+  .route::before { content:''; position:absolute; left:11px; top:6px; bottom:30px; width:2px; background:linear-gradient(to bottom, rgba(212,169,106,0.5), rgba(212,169,106,0.15)); }
+
+  .step { position:relative; margin-bottom:16px; }
+  .step-node { position:absolute; left:-34px; top:0; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; background:#1a2620; border:2px solid rgba(212,169,106,0.4); z-index:2; }
+  .step.house .step-node { background:#1f7a30; border-color:#78dc8c; }
+  .step.lift .step-node { background:#2a2410; border-color:#E8D8B8; }
+  .step.trail .step-node { border-color:transparent; }
+
+  .step-card { background:#15201a; border:1px solid rgba(255,255,255,0.07); border-radius:11px; padding:12px 13px; }
+  .step.house .step-card { background:linear-gradient(135deg,#1f7a30,#155724); border-color:rgba(120,220,140,0.45); }
+  .step.lift .step-card { background:rgba(40,33,16,0.55); border-color:rgba(232,216,184,0.25); border-style:dashed; }
+  .step.lunch .step-node { background:#7a3f1a; border-color:#e0a060; }
+  .step.lunch .step-card { background:rgba(80,50,25,0.4); border-color:rgba(224,160,96,0.3); }
+  .step.lunch .step-kind { color:rgba(224,160,96,0.9); }
+  .lunch-opts { display:grid; grid-template-columns:1fr; gap:8px; margin-top:9px; }
+  @media (min-width:520px){ .lunch-opts { grid-template-columns:1fr 1fr; } }
+  .lunch-opt { background:rgba(0,0,0,0.22); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:9px 11px; }
+  .lunch-opt .lo-head { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:3px; }
+  .lunch-opt.mountain .lo-head { color:#e0a060; }
+  .lunch-opt.town .lo-head { color:#9cc5e8; }
+  .lunch-opt .lo-body { font-size:12px; color:rgba(255,255,255,0.7); line-height:1.45; }
+  .lunch-opt .lo-body strong { color:#fff; font-weight:600; }
+
+  .evening-box { background:rgba(123,80,160,0.1); border:1px dashed rgba(180,140,220,0.4); border-radius:12px; padding:14px 15px; margin-top:14px; }
+  .evening-box .eb-title { font-family:'Bebas Neue',sans-serif; font-size:19px; letter-spacing:0.04em; color:#c9a8e8; margin-bottom:4px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .evening-box .eb-tag { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:0.08em; padding:2px 7px; border-radius:10px; background:rgba(180,140,220,0.18); color:#c9a8e8; border:1px solid rgba(180,140,220,0.35); }
+  .evening-box p { font-size:12.5px; color:rgba(255,255,255,0.72); line-height:1.55; margin-top:4px; }
+  .evening-box .eb-warn { font-family:'DM Mono',monospace; font-size:10px; color:#e0b483; margin-top:8px; }
+
+  .dinner-box { background:linear-gradient(135deg,#5a2d1a,#3d1f12); border:1px solid rgba(224,160,96,0.35); border-radius:12px; padding:14px 15px; margin-top:14px; }
+  .dinner-box .db-title { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:0.04em; color:#f0c89a; margin-bottom:4px; }
+  .dinner-box p { font-size:12.5px; color:rgba(255,255,255,0.82); line-height:1.55; }
+
+  .trail-list { background:rgba(0,0,0,0.18); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:11px 13px; margin-bottom:14px; }
+  .tl-title { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:rgba(212,169,106,0.7); margin-bottom:8px; }
+  .tl-title .tl-sub { color:rgba(255,255,255,0.35); }
+  .tl-chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .tl-chip { display:inline-flex; align-items:center; gap:6px; font-size:12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:4px 10px; color:rgba(255,255,255,0.82); }
+  .tl-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+  /* swim lanes */
+  .fork-marker { position:relative; padding-left:34px; margin:6px 0 10px; }
+  .fork-marker .step-node { position:absolute; left:-0px; top:0; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; background:#2a2410; border:2px solid #E8D8B8; }
+  .fork-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:#E8D8B8; padding-top:3px; }
+  .fork-sub { font-size:12px; color:rgba(255,255,255,0.55); margin-top:3px; line-height:1.45; }
+
+  .lanes { display:grid; grid-template-columns:1fr; gap:12px; margin:4px 0 6px; }
+  @media (min-width:680px){ .lanes { grid-template-columns:1fr 1fr; } }
+  .lane { border-radius:12px; padding:12px 13px; border:1px solid rgba(255,255,255,0.1); }
+  .lane.mountain { background:rgba(80,50,25,0.28); border-color:rgba(224,160,96,0.3); }
+  .lane.town { background:rgba(40,60,80,0.28); border-color:rgba(120,170,210,0.3); }
+  .lane-head { display:flex; align-items:center; gap:8px; margin-bottom:9px; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.1); }
+  .lane-head .lh-icon { font-size:17px; }
+  .lane-head .lh-title { font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:0.03em; line-height:1; }
+  .lane.mountain .lh-title { color:#e8c89a; }
+  .lane.town .lh-title { color:#a8cce8; }
+  .lane-sub { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.04em; color:rgba(255,255,255,0.5); margin-top:2px; }
+  .lane-step { margin-bottom:9px; }
+  .lane-step:last-child { margin-bottom:0; }
+  .lane-step .ls-kind { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(212,169,106,0.7); margin-bottom:2px; }
+  .lane-step .ls-title { font-size:13px; font-weight:600; line-height:1.25; }
+  .lane-step .ls-body { font-size:12px; color:rgba(255,255,255,0.68); line-height:1.5; margin-top:3px; }
+  .lane-step .ls-body strong { color:#fff; font-weight:600; }
+  .lane-route { display:flex; flex-direction:column; gap:0; }
+  .lane-route .step { padding-left:30px; }
+  .lane-route .step-card { padding:10px 11px; }
+  .lane-route .step-title { font-size:13px; }
+  .lane-route .step-note { font-size:11.5px; }
+  .lane-route .lift-after { font-size:10px; padding:5px 8px; }
+  .lane-route .step-links { margin-top:7px; }
+  .lane-route .trail-meta-row { gap:5px; }
+
+  .rejoin-marker { position:relative; padding-left:34px; margin:10px 0 6px; }
+  .rejoin-marker .step-node { position:absolute; left:0px; top:0; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; background:#1f3a26; border:2px solid #78dc8c; }
+  .rejoin-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:#9ce8ad; padding-top:3px; }
+  .rejoin-sub { font-size:12px; color:rgba(255,255,255,0.55); margin-top:3px; line-height:1.45; }
+
+  .lift-after { margin-top:8px; font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.02em; color:#e8d8b8; background:rgba(232,216,184,0.1); border:1px solid rgba(232,216,184,0.22); border-radius:7px; padding:6px 10px; }
+  .lift-after strong { color:#fff; font-weight:600; }
+
+  .finish-pair { border-color:rgba(160,160,200,0.3) !important; }
+  .finish-opts { display:grid; grid-template-columns:1fr; gap:9px; margin-top:9px; }
+  @media (min-width:600px){ .finish-opts { grid-template-columns:1fr 1fr; } }
+  .finish-opt { border-radius:9px; padding:10px 12px; border:1px solid rgba(255,255,255,0.1); }
+  .finish-opt.blue { background:rgba(33,99,235,0.12); border-color:rgba(33,150,243,0.3); }
+  .finish-opt.black { background:rgba(60,60,60,0.3); border-color:rgba(150,150,150,0.35); }
+  .finish-opt .fo-head { display:flex; align-items:center; gap:7px; font-size:11px; font-family:'DM Mono',monospace; letter-spacing:0.03em; color:rgba(255,255,255,0.7); margin-bottom:6px; }
+  .finish-opt .fo-body { font-size:12px; line-height:1.5; color:rgba(255,255,255,0.78); }
+  .finish-opt .fo-body strong { color:#fff; font-weight:600; }
+  .finish-opt .fo-links { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+
+  .totw-box { background:linear-gradient(135deg,rgba(123,80,160,0.22),rgba(60,40,90,0.25)); border:1px solid rgba(180,140,220,0.4); border-radius:13px; padding:16px 16px; margin-top:16px; }
+  .totw-box .tb-flag { display:inline-block; font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:#1a1224; background:#c9a8e8; padding:3px 9px; border-radius:10px; margin-bottom:9px; }
+  .totw-box .tb-title { font-family:'Bebas Neue',sans-serif; font-size:23px; letter-spacing:0.03em; color:#d8c2f0; line-height:1; margin-bottom:7px; }
+  .totw-box p { font-size:12.5px; line-height:1.55; color:rgba(255,255,255,0.8); margin-bottom:8px; }
+  .totw-box .tb-trails { font-size:11.5px; color:rgba(255,255,255,0.62); line-height:1.5; margin-bottom:10px; }
+  .totw-box .tb-links { display:flex; gap:8px; flex-wrap:wrap; }
+  .totw-box .tb-link { font-family:'DM Mono',monospace; font-size:11px; padding:8px 13px; border-radius:8px; background:rgba(180,140,220,0.2); border:1px solid rgba(180,140,220,0.4); color:#e8d8f8; text-decoration:none; }
+  .totw-box .tb-warn { font-family:'DM Mono',monospace; font-size:10px; color:#e0b483; margin-top:9px; }
+
+  .step-kind { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:rgba(212,169,106,0.7); margin-bottom:3px; }
+  .step.house .step-kind { color:rgba(200,255,210,0.85); }
+  .step.lift .step-kind { color:rgba(232,216,184,0.8); }
+  .step-title { font-size:15px; font-weight:600; line-height:1.25; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .step.house .step-title { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:0.03em; }
+  .step-note { font-size:12.5px; color:rgba(255,255,255,0.62); line-height:1.5; margin-top:4px; }
+  .step.house .step-note { color:rgba(255,255,255,0.85); }
+
+  .trail-meta-row { display:flex; align-items:center; gap:8px; margin-top:7px; flex-wrap:wrap; }
+  .rating-pill { font-family:'DM Mono',monospace; font-size:9px; font-weight:600; padding:3px 8px; border-radius:4px; }
+  .r-blue { background:#1D4ED8; color:#fff; } .r-black { background:#3a3a3a; color:#fff; border:1px solid #666; } .r-dbl { background:#6B21A8; color:#fff; }
+  .r-green { background:#15803D; color:#fff; }
+  .meta-txt { font-family:'DM Mono',monospace; font-size:10px; color:rgba(255,255,255,0.5); }
+
+  .step-links { display:flex; gap:7px; margin-top:10px; }
+  .step-link { flex:1; font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.03em; text-align:center; text-decoration:none; color:#fff; padding:9px; border-radius:8px; transition:opacity .15s; }
+  .step-link:active { opacity:0.75; }
+  .l-tf { background:#2563EB; } .l-strava { background:#FC4C02; }
+
+  .finish-flag { display:inline-block; font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.08em; background:rgba(120,220,140,0.18); color:#9ce8ad; border:1px solid rgba(120,220,140,0.4); border-radius:5px; padding:2px 7px; margin-left:4px; }
+
+  .split-box { background:rgba(61,107,138,0.12); border:1px solid rgba(120,170,210,0.25); border-radius:10px; padding:11px 13px; margin-top:6px; }
+  .split-box .sb-title { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:#9cc5e8; margin-bottom:5px; }
+  .split-box p { font-size:12.5px; color:rgba(255,255,255,0.7); line-height:1.5; }
+
+  .footer-note { text-align:center; font-family:'DM Mono',monospace; font-size:9px; color:rgba(255,255,255,0.32); letter-spacing:0.04em; line-height:1.7; margin-top:26px; }
+
+  .zones-tracker { background:rgba(0,0,0,0.22); border:1px solid rgba(212,169,106,0.18); border-radius:12px; padding:12px 14px; margin-bottom:18px; }
+  .zt-title { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(212,169,106,0.7); margin-bottom:9px; }
+  .zt-row { display:flex; gap:7px; flex-wrap:wrap; }
+  .zt-chip { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.04em; padding:6px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.4); transition:all .2s; }
+  .zt-chip.lit[data-zone="fitz"] { background:rgba(61,107,138,0.25); border-color:#3D6B8A; color:#9cc5e8; }
+  .zt-chip.lit[data-zone="garbo"] { background:rgba(74,124,89,0.25); border-color:#4A7C59; color:#86bfa0; }
+  .zt-chip.lit[data-zone="creek"] { background:rgba(193,122,58,0.25); border-color:#C17A3A; color:#e0b483; }
+  .zt-chip.lit[data-zone="peak"] { background:rgba(123,80,160,0.3); border-color:#9b78c8; color:#c9a8e8; }
+
+  .mode-toggle { display:flex; align-items:center; gap:12px; margin:6px 0 14px; flex-wrap:wrap; }
+  .mt-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:rgba(212,169,106,0.7); }
+  .mt-switch { display:flex; gap:6px; background:rgba(0,0,0,0.25); padding:4px; border-radius:26px; border:1px solid rgba(255,255,255,0.1); }
+  .mt-btn { font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; padding:8px 16px; border-radius:22px; border:none; background:transparent; color:rgba(255,255,255,0.55); cursor:pointer; transition:all .2s; display:flex; flex-direction:column; align-items:center; line-height:1.15; }
+  .mt-btn small { font-family:'DM Mono',monospace; font-size:8px; font-weight:400; letter-spacing:0.05em; opacity:0.7; margin-top:1px; }
+  .mt-btn.active[data-mode="mellow"] { background:#2563EB; color:#fff; }
+  .mt-btn.active[data-mode="aggressive"] { background:#3a3a3a; color:#fff; border:1px solid #777; }
+
+  .prog-badge { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:0.06em; padding:2px 6px; border-radius:4px; background:rgba(212,169,106,0.15); color:#d4a96a; border:1px solid rgba(212,169,106,0.3); white-space:nowrap; }
+  .prog-note { background:rgba(212,169,106,0.08); border:1px solid rgba(212,169,106,0.2); border-radius:10px; padding:10px 13px; margin-bottom:16px; font-size:12px; line-height:1.55; color:rgba(240,235,227,0.75); }
+  .prog-note strong { color:#d4a96a; }
+  .mode-tag { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.04em; padding:3px 9px; border-radius:14px; }
+  .mode-tag.mode-mellow { background:rgba(37,99,235,0.2); color:#9cc5e8; border:1px solid rgba(37,99,235,0.4); }
+  .mode-tag.mode-aggressive { background:rgba(120,120,120,0.2); color:#ddd; border:1px solid rgba(150,150,150,0.4); }
+
+  .mountain-summary { background:rgba(0,0,0,0.18); border:1px solid rgba(212,169,106,0.18); border-radius:14px; padding:14px; margin-bottom:18px; }
+  .ms-title { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:0.05em; color:#D4A96A; margin-bottom:12px; }
+  .es-sub { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.06em; text-transform:uppercase; color:rgba(212,169,106,0.6); margin-bottom:9px; }
+  .mountain-summary .elev-strip { background:transparent; border:none; padding:0; margin-bottom:12px; }
+  .mountain-summary .zones-tracker { background:transparent; border:none; border-top:1px solid rgba(212,169,106,0.12); border-radius:0; padding:12px 0 0; margin-bottom:0; }
+
+  .elev-strip { background:rgba(0,0,0,0.22); border:1px solid rgba(212,169,106,0.18); border-radius:12px; padding:12px 14px; margin-bottom:18px; }
+  .es-title { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(212,169,106,0.7); margin-bottom:10px; }
+  .es-bands { display:flex; flex-direction:column; gap:3px; }
+  .es-band { display:flex; align-items:center; justify-content:space-between; padding:7px 12px; border-radius:6px; font-size:12px; }
+  .es-band .es-name { font-weight:600; }
+  .es-band .es-elev { font-family:'DM Mono',monospace; font-size:10px; opacity:0.75; }
+  .es-band.peak { background:linear-gradient(90deg,rgba(123,80,160,0.35),rgba(123,80,160,0.12)); color:#d8c2f0; }
+  .es-band.garbo { background:linear-gradient(90deg,rgba(74,124,89,0.32),rgba(74,124,89,0.1)); color:#a6d8ba; margin-left:8px; }
+  .es-band.creek { background:linear-gradient(90deg,rgba(193,122,58,0.3),rgba(193,122,58,0.1)); color:#e8c89a; margin-left:4px; }
+  .es-band.fitz { background:linear-gradient(90deg,rgba(61,107,138,0.32),rgba(61,107,138,0.1)); color:#a8cce8; margin-left:16px; }
+  .es-band.house { background:linear-gradient(90deg,rgba(31,122,48,0.5),rgba(31,122,48,0.2)); color:#bff0c8; border:1px solid rgba(120,220,140,0.35); margin-top:3px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">WHISTLER ROUTE PLAN<small>HOUSE → LIFT → TRAIL → HOUSE</small></div>
+  <div class="topbar-cta">
+    <a class="big-tf" href="https://www.trailforks.com/region/whistler-mountain-bike-park/map/?map3d=1&p=78&activitytype=1&z=14.1&lat=50.09077&lon=-122.96322&content=trails,labels,region,poi,directory,polygon,eventpremium,waypoint,trails_top,nst,routes_featured&b=160&m=satellite-streets" target="_blank" rel="noopener">🗺 Trailforks 3D ↗</a>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="sandbox-note">
+    <strong>⚠ Preview blocks the embedded map.</strong> Once hosted, the 2D Trailforks widget loads in the frame below. The full tilted 3D satellite view can't be embedded — Trailforks only serves 3D on its own site — so it opens in a new tab via the buttons. All trail links work regardless.
+  </div>
+
+  <div class="map-card">
+    <div class="map-frame-h">
+      <iframe
+        src="https://www.trailforks.com/widgets/map/?rmsId=4118&activitytype=1&z=13.5&lat=50.0908&lon=-122.9632&basemap=trailforks-topo"
+        title="Trailforks Whistler Bike Park map" loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+      <div class="map-fallback" id="mapFallback">
+        <div class="mf-icon">🛰️</div>
+        <h3>Live Trailforks Map</h3>
+        <p>The embedded 2D map loads here once hosted. For the tilted 3D satellite view, tap below — Trailforks only allows full 3D on its own site, not inside an embed.</p>
+        <a href="https://www.trailforks.com/region/whistler-mountain-bike-park/map/?map3d=1&p=78&activitytype=1&z=14.1&lat=50.09077&lon=-122.96322&content=trails,labels,region,poi,directory,polygon,eventpremium,waypoint,trails_top,nst,routes_featured&b=160&m=satellite-streets" target="_blank" rel="noopener">Open 3D satellite map ↗</a>
+      </div>
+    </div>
+  </div>
+  <div class="map-3d-cta">
+    <span>The embed above is the flat 2D map (Trailforks only permits the 2D widget inside other sites).</span>
+    <a href="https://www.trailforks.com/region/whistler-mountain-bike-park/map/?map3d=1&p=78&activitytype=1&z=14.1&lat=50.09077&lon=-122.96322&content=trails,labels,region,poi,directory,polygon,eventpremium,waypoint,trails_top,nst,routes_featured&b=160&m=satellite-streets" target="_blank" rel="noopener">🏔 Open the tilted 3D satellite map ↗</a>
+  </div>
+  <div class="map-caption">Trailforks Whistler Mountain Bike Park · switch to 3D in the map controls</div>
+
+  <div class="mountain-summary">
+    <div class="ms-title">📍 Mountain Summary</div>
+    <div class="elev-strip" id="elevStrip">
+      <div class="es-sub">Four zones by elevation · you ride down, lift back up, finish at the door</div>
+      <div class="es-bands">
+        <div class="es-band peak"><span class="es-name">Peak</span><span class="es-elev">2,182 m / 7,160 ft</span></div>
+        <div class="es-band garbo"><span class="es-name">Garbanzo</span><span class="es-elev">1,850 m / 6,069 ft</span></div>
+        <div class="es-band creek"><span class="es-name">Creekside</span><span class="es-elev">1,442 m / 4,730 ft</span></div>
+        <div class="es-band fitz"><span class="es-name">Fitzsimmons</span><span class="es-elev">1,019 m / 3,346 ft</span></div>
+        <div class="es-band house"><span class="es-name">🏠 House · Creekside base</span><span class="es-elev">~670 m / 2,200 ft</span></div>
+      </div>
+    </div>
+    <div class="zones-tracker" id="zonesTracker">
+      <div class="zt-title">All 4 zones across the trip — each day lights up the zones it covers</div>
+      <div class="zt-row">
+        <span class="zt-chip" data-zone="fitz">Fitzsimmons</span>
+        <span class="zt-chip" data-zone="garbo">Garbanzo</span>
+        <span class="zt-chip" data-zone="creek">Creekside</span>
+        <span class="zt-chip" data-zone="peak">Peak ★</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="mode-toggle">
+    <div class="mt-label">Ride appetite</div>
+    <div class="mt-switch">
+      <button class="mt-btn active" data-mode="mellow" onclick="setMode('mellow',this)">🟦 Mellow<small>more blue · flowy</small></button>
+      <button class="mt-btn" data-mode="aggressive" onclick="setMode('aggressive',this)">⬛ Aggressive<small>more black · send</small></button>
+    </div>
+  </div>
+
+  <div class="day-filter" id="dayFilter">
+    <button class="day-tab active" data-day="1" onclick="setDay('1',this)">Day 1 · Fitz</button>
+    <button class="day-tab" data-day="2" onclick="setDay('2',this)">Day 2 · Garbo</button>
+    <button class="day-tab" data-day="3" onclick="setDay('3',this)">Day 3 · Peak</button>
+  </div>
+
+  <div id="days"></div>
+
+  <div class="footer-note">
+    Each day finishes in the Creek zone — the only zone whose trails reach the Creekside base by the house. Confident-blue finish: Earth Circus or Call Me Maybe. Black finish to the very door: Insomnia. You ride to the door; no lift down.<br>
+    Verified from Trailforks: the Creek zone is entered <em>from Garbo</em> via Una Moss / Expressway (blue) or Freight Train / No Joke (advanced). "Dave Murray Downhill" is a winter ski run, not a summer bike trail, so it's not in the routing.<br>
+    Top of the World's real top-to-Creekside line is the expert "Mega Descent" backcountry route — shown as a separate Day 3 add-on, not lift-park flow.<br>
+    Trail buttons link the real Trailforks page where verified (B-Line, Crank It Up, A-Line, Dirt Merchant, Insomnia, Call Me Maybe, Southpark, Top of the World, etc.). The 🟠 Strava button deep-links to the real segment when its ID is confirmed (e.g. Heart of Darkness), otherwise to that trail's Trailforks page which lists its Strava segment — no fabricated IDs.<br>
+    2269 Nordic Dr · Aug 18–24 · all four zones across three days.
+  </div>
+</div>
+
+<script>
+const DAY_COLORS = { 1:'#3D6B8A', 2:'#4A7C59', 3:'#C17A3A' };
+const ZONE_LABEL = {
+  1:{txt:'Fitzsimmons Zone', bg:'rgba(61,107,138,0.2)', col:'#9cc5e8'},
+  2:{txt:'Garbanzo Zone', bg:'rgba(74,124,89,0.2)', col:'#86bfa0'},
+  3:{txt:'Peak + Creekside', bg:'rgba(193,122,58,0.2)', col:'#e0b483'},
+};
+function ratingClass(r){ return r==='Green'?'r-green':r==='Blue'?'r-blue':r==='Double Black'?'r-dbl':'r-black'; }
+function ratingMark(r){ return r==='Green'?'● Green':r==='Double Black'?'◆◆ 2× Black':r==='Black'?'◆ Black':'● Blue'; }
+function stripeOf(r){ return r==='Green'?'#4CAF50':r==='Blue'?'#2196F3':r==='Double Black'?'#9C27B0':'#cfcfcf'; }
+
+// VERIFIED Trailforks slugs — each read directly off the live Trailforks site during
+// planning. Trails in this map link straight to their real page. Anything not in here
+// falls back to a scoped web search (no fabricated IDs / guessed URLs).
+const TF_SLUGS = {
+  'EZ Does It':'ez-does-it-lower',
+  'B-Line':'bline-upper',
+  'Crank It Up':'crank-it-up-upper',
+  'Heart of Darkness':'heart-darkness',
+  'World Cup Single Track':'world-cup-single-track',
+  'Hornet':'hornet',
+  'Samurai Pizza Cat':'samurai-pizza-cat',
+  'A-Line':'aline-upper',
+  'Dirt Merchant':'dirt-merchant-proline',
+  'Top of the World':'top-world',
+  'Southpark':'southpark',
+  'Insomnia':'insomnia',
+  'Call Me Maybe':'call-me-maybe',
+  "BC's Trail":'bc-s-trail-6609',
+  'Big Timber':'big-timber',
+  'Del Bocca Vista':'del-bocca-vista',
+};
+// VERIFIED Strava segment IDs — only IDs confirmed by a human (you), never guessed.
+// Add entries as you confirm them and the button deep-links straight to the segment.
+// Heart of Darkness confirmed by Don: strava.com/segments/21326487.
+const STRAVA_IDS = {
+  'Heart of Darkness':'21326487',
+};
+function tfSearch(name){
+  if(TF_SLUGS[name]) return 'https://www.trailforks.com/trails/'+TF_SLUGS[name]+'/';
+  return 'https://www.google.com/search?q='+encodeURIComponent('Trailforks '+name+' Whistler bike park');
+}
+// Strava: a confirmed numeric ID deep-links to the real segment. Otherwise we can't
+// safely know the ID (the Strava MCP only reads YOUR OWN rides — none at Whistler yet),
+// so we link the trail's Trailforks page (which lists its Strava segment) instead of guessing.
+function stravaSearch(name){
+  if(STRAVA_IDS[name]) return 'https://www.strava.com/segments/'+STRAVA_IDS[name];
+  if(TF_SLUGS[name]) return 'https://www.trailforks.com/trails/'+TF_SLUGS[name]+'/#stravasegments';
+  return 'https://www.trailforks.com/region/whistler/stravasegments/';
+}
+// The verified Garbo→Creekside backcountry epic (separate add-on, not park flow).
+const MEGA_DESCENT_URL = 'https://www.trailforks.com/route/mega-descent-top-of-bike-park-to-creekside-village-whistler-advanced-mountain-bike-route/';
+const MEGA_DESCENT_3D = MEGA_DESCENT_URL + 'tour/';
+
+// Each day has two modes (mellow / aggressive), each an ordered list of steps.
+// Trail steps carry `prog` = the official Whistler matrix code from the map back-page
+// (F=Freeride ladder, C/G/P = zone tech columns; letter+number = difficulty tier+step).
+const DAYS = {
+  1: {
+    intro:'Calibration day in the Fitzsimmons zone — the park\'s biggest variety and where Whistler itself sends every rider to warm up. The Fitzsimmons Express laps quickly, so after each run you hop straight back on it. Mellow keeps it flowy-blue with blue tech as the spice; Aggressive brings A-Line and Dirt Merchant forward but holds black tech for later days.',
+    prog:'Whistler\'s official progression: <strong>EZ Does It → B-Line</strong> warm-up for everyone, then the freeride ladder (B-Line → Crank It Up → A-Line) or the blue-tech ladder (Samurai Pizza Cat → Hornet). Codes shown are from the map\'s Progression Matrix. Every Fitz trail laps off the Fitzsimmons Express.',
+    mellow:[
+      { type:'house', kind:'Start · 9:00 AM', title:'🏠 Your House — 2269 Nordic Dr',
+        note:'Ride down to the Creekside Gondola base and load up.' },
+      { type:'lift', kind:'Lift up', title:'Creekside Gondola → Whistler Village Gondola → Fitzsimmons Express',
+        note:'Creekside and Fitzsimmons are separate base areas. Easiest start: ride/shuttle to the Whistler Village base and take the Fitzsimmons Express into the Fitz zone. (Confirm the Creekside↔Village link on arrival — the bases are not directly connected by a single bike trail.)' },
+      { type:'trail', name:'EZ Does It', rating:'Green', prog:'warm-up', meta:'green · everyone warms up here',
+        liftAfter:'Fitzsimmons Express',
+        note:'Whistler\'s official first lap for every rider, every day. One mellow spin to wake the body and read the dirt.' },
+      { type:'trail', name:'B-Line', rating:'Blue', prog:'FB-1', meta:'blue freeride · easiest blue',
+        liftAfter:'Fitzsimmons Express',
+        note:'The classic groomed jump trail — rollers and berms you can roll or pop. Rated the easiest blue freeride on the matrix.' },
+      { type:'trail', name:'Crank It Up', rating:'Blue', prog:'FB-2', meta:'blue freeride · flow',
+        liftAfter:'Fitzsimmons Express',
+        note:'Step up: wall rides, optional jumps, wide bridges.' },
+      { type:'trail', name:'Heart of Darkness', rating:'Blue', prog:'FB-2', meta:'blue freeride · flow',
+        liftAfter:'Fitzsimmons Express',
+        note:'Long flowy freeride in the top half of the blues — heavily used, bermy, big air or roll over.' },
+      { type:'trail', name:'World Cup Single Track', rating:'Blue', prog:'FB-1', meta:'blue freeride · easiest',
+        liftAfter:'Fitzsimmons Express',
+        note:'The easiest blue freeride on the progression chart — a confidence-builder between green and the bigger blues.' },
+      { type:'optional', name:'Samurai Pizza Cat', rating:'Blue', prog:'CB-1', meta:'blue tech · top of the blue-tech ladder',
+        liftAfter:'Fitzsimmons Express',
+        note:'Optional blue-tech taste — short technical trail at the top of the blue technical trails. Mix it in if the group wants rocks and roots.' },
+      { type:'optional', name:'A-Line', rating:'Black', prog:'FA-1', meta:'optional · flowy black',
+        liftAfter:'Fitzsimmons Express',
+        note:'Optional for anyone itching to send — the iconic black jump line, all rollable. Everyone else keeps lapping blues. No pressure on day 1.' },
+      { type:'split' },
+      { type:'finishpair' },
+      { type:'house', kind:'End · ~by 3:30–4pm', title:'🏠 Back at the House',
+        note:'Clean up for the early ~4pm dinner — optional nightcap lap after if the legs have it.' },
+    ],
+    aggressive:[
+      { type:'house', kind:'Start · 9:00 AM', title:'🏠 Your House — 2269 Nordic Dr',
+        note:'Ride down to the Creekside Gondola base and load up.' },
+      { type:'lift', kind:'Lift up', title:'Whistler Village Gondola → Fitzsimmons Express',
+        note:'Get to the Whistler Village base, then the Fitzsimmons Express into the Fitz zone. (Confirm the Creekside↔Village link on arrival.)' },
+      { type:'trail', name:'B-Line', rating:'Blue', prog:'FB-1', meta:'blue · mandatory warm-up',
+        liftAfter:'Fitzsimmons Express',
+        note:'Even sending hard, everyone takes one B-Line lap to dial suspension and read the dirt. Pre-ride, re-ride, free-ride.' },
+      { type:'trail', name:'Crank It Up', rating:'Blue', prog:'FB-2', meta:'blue · build speed',
+        liftAfter:'Fitzsimmons Express',
+        note:'Build speed and confidence on the features before the blacks.' },
+      { type:'trail', name:'A-Line', rating:'Black', prog:'FA-1', meta:'black freeride · the classic',
+        liftAfter:'Fitzsimmons Express',
+        note:'The icon. Machine-built jump tables, wall-to-wall berms. Scout once, then lap it as many times as you like.' },
+      { type:'trail', name:'Dirt Merchant', rating:'Black', prog:'FA-1', meta:'black freeride · rock + flow',
+        liftAfter:'Fitzsimmons Express',
+        note:'A-Line\'s rowdier sibling — rock slabs and bigger features, still freeride not tech. Holds the day at flowy-black; black tech waits for day 2.' },
+      { type:'optional', name:'Heart of Darkness', rating:'Blue', prog:'FB-2', meta:'cool-down flow lap',
+        liftAfter:'Fitzsimmons Express',
+        note:'Optional flowy lap to spin the legs between black laps.' },
+      { type:'split' },
+      { type:'finishpair' },
+      { type:'house', kind:'End · ~by 3:30–4pm', title:'🏠 Back at the House',
+        note:'Clean up for the early ~4pm dinner — optional nightcap lap after if the legs have it.' },
+    ]
+  },
+  2: {
+    intro:'Garbanzo day — steeper, longer, rootier. The Garbanzo Express laps the upper zone; after each Garbo run you re-lap Garbo. When you\'re ready to head home you ride the verified connector into the Creekside zone and finish there — the only zone that reaches your door. Mellow leans on Blue Velvet flow; Aggressive opens the full Garbo tech menu.',
+    prog:'Garbo is where black tech belongs (you warmed up day 1). Real connector (from Trailforks): Creekside is entered <strong>from Garbo</strong> — blue access via Una Moss / Expressway, advanced access via Freight Train / No Joke. Garbo trails lap off the Garbanzo Express.',
+    mellow:[
+      { type:'house', kind:'Start · 9:00 AM', title:'🏠 Your House — 2269 Nordic Dr',
+        note:'Ride to the Creekside Gondola base and load up.' },
+      { type:'lift', kind:'Lift up', title:'Creekside Gondola → Garbanzo Express',
+        note:'Up to the Garbanzo zone via the Garbanzo Express. (The Garbanzo Express is the lap lift for everything below.)' },
+      { type:'trail', name:'Blue Velvet', rating:'Blue', prog:'GB-1', meta:'blue · fast flow warm-up',
+        liftAfter:'Garbanzo Express',
+        note:'Garbo warm-up — one of the fastest flow trails in the park.' },
+      { type:'trail', name:'Original Sin', rating:'Black', prog:'GB-3', meta:'black tech · scenic',
+        liftAfter:'Garbanzo Express',
+        note:'Rock gardens, roots and natural features — the approachable end of Garbo tech. Walk anything over your head; that\'s normal here.' },
+      { type:'trail', name:'Freight Train', rating:'Black', prog:'GB-2', meta:'black freeride · jumps',
+        liftAfter:'Garbanzo Express',
+        note:'The Garbo jump line — gaps and step-downs, freeride flow rather than gnarly tech. Scout the lower gap.' },
+      { type:'optional', name:'In Deep', rating:'Black', prog:'GB-4', meta:'optional · steep black tech',
+        liftAfter:'Garbanzo Express',
+        note:'Optional — Garbo\'s sustained steep tech. Everyone else re-laps Blue Velvet / Original Sin.' },
+      { type:'split' },
+      { type:'trail', name:'Una Moss / Expressway', rating:'Blue', prog:'connector', meta:'verified Garbo → Creekside (blue access)',
+        note:'The verified blue connector from Garbo into the Creekside zone. (Advanced riders can instead drop in via Freight Train / No Joke.) No lift — this rolls you toward the Creek zone.' },
+      { type:'trail', name:'Southpark', rating:'Blue', prog:'Creekside', meta:'blue-to-proline · creekside flow',
+        note:'Smooth berms, rollers and creek-bridge work through cedar rainforest — beginner-blue all the way to pro-line. Sets you up for the finish trails to the door.' },
+      { type:'finishpair' },
+      { type:'house', kind:'End · ~by 3:30–4pm', title:'🏠 Back at the House',
+        note:'You finish in the Creek zone right by the house. Clean up for the ~4pm dinner.' },
+    ],
+    aggressive:[
+      { type:'house', kind:'Start · 9:00 AM', title:'🏠 Your House — 2269 Nordic Dr',
+        note:'Ride to the Creekside Gondola base and load up.' },
+      { type:'lift', kind:'Lift up', title:'Creekside Gondola → Garbanzo Express',
+        note:'Up to the Garbanzo zone via the Garbanzo Express.' },
+      { type:'trail', name:'Blue Velvet', rating:'Blue', prog:'GB-1', meta:'blue · warm-up lap',
+        liftAfter:'Garbanzo Express',
+        note:'One fast warm-up lap before the tech.' },
+      { type:'trail', name:'Freight Train', rating:'Black', prog:'GB-2', meta:'black freeride · jumps',
+        liftAfter:'Garbanzo Express',
+        note:'Rowdier than A-Line. Scout the lower gap, then lap it.' },
+      { type:'trail', name:'Original Sin', rating:'Black', prog:'GB-3', meta:'black tech',
+        liftAfter:'Garbanzo Express',
+        note:'Classic Garbo tech — rock gardens and natural features. Where the day earns its name.' },
+      { type:'trail', name:'In Deep', rating:'Black', prog:'GB-4', meta:'black tech · steep sustained',
+        liftAfter:'Garbanzo Express',
+        note:'The big sustained tech descent — steep rock faces and rooty chutes. Pace yourself.' },
+      { type:'optional', name:'LoamOnade', rating:'Double Black', prog:'GB-4', meta:'2× black · dry only',
+        liftAfter:'Garbanzo Express',
+        note:'Experts only, dry conditions only. Send your most experienced rider first for a condition report.' },
+      { type:'split' },
+      { type:'trail', name:'Freight Train / No Joke', rating:'Black', prog:'connector', meta:'verified Garbo → Creekside (advanced access)',
+        note:'The verified advanced connector from Garbo into the Creekside zone. (Blue option: Una Moss / Expressway.) Rolls you toward the Creek zone — no lift.' },
+      { type:'trail', name:'Southpark', rating:'Blue', prog:'Creekside', meta:'blue-to-proline · creekside flow',
+        note:'Eases you into the Creek zone — smooth, fast, sets up the finish to the door.' },
+      { type:'finishpair' },
+      { type:'house', kind:'End · ~by 3:30–4pm', title:'🏠 Back at the House',
+        note:'Finish in the Creek zone by the house. Clean up for the ~4pm dinner.' },
+    ]
+  },
+  3: {
+    intro:'Creekside day — lift-park riding in the Creek zone off the Creekside Gondola, so it finishes right at your door. The legendary Top of the World is shown as a separate add-on below, because its real descent to Creekside (the "Mega Descent") is an expert backcountry route, not lift-park flow. Riding the Creek zone today completes all four zones across the trip.',
+    prog:'Creek zone trails lap off the Creekside Gondola. Verified Creek-zone ratings (from Whistler\'s park-opening list): Blue — Earth Circus, Call Me Maybe, Cirque Du Soil, Palm Corners; Black — Insomnia, Delayed Fuse, Line of Control. Top of the World is a separate Peak-ticket add-on — see the box below.',
+    mellow:[
+      { type:'house', kind:'Start · 9:00 AM', title:'🏠 Your House — 2269 Nordic Dr',
+        note:'Ride to the Creekside Gondola base and load up — today everything laps off this one gondola.' },
+      { type:'lift', kind:'Lift up', title:'Creekside Gondola',
+        note:'Up into the Creek zone. This is your lap lift all day.' },
+      { type:'trail', name:'Earth Circus', rating:'Blue', prog:'Creekside', meta:'blue flow · modern creekside',
+        liftAfter:'Creekside Gondola',
+        note:'Modern Creekside flow — smooth and confidence-building. Loosen the legs.' },
+      { type:'trail', name:'Call Me Maybe', rating:'Blue', prog:'Creekside', meta:'blue tech · by Kadenwood Gondola',
+        liftAfter:'Creekside Gondola',
+        note:'Blue technical line that runs next to the Kadenwood Gondola before rejoining Earth Circus — blue tech to mix with the flow trails.' },
+      { type:'trail', name:'Cirque Du Soil', rating:'Blue', prog:'Creekside', meta:'blue · creek flow',
+        liftAfter:'Creekside Gondola',
+        note:'Another Creek-zone blue to keep the whole group lapping comfortably.' },
+      { type:'optional', name:'Southpark', rating:'Blue', prog:'Creekside', meta:'blue-to-proline · scenic',
+        liftAfter:'Creekside Gondola',
+        note:'Optional — the creek-bridge cedar-rainforest flow trail, beautiful and forgiving.' },
+      { type:'split' },
+      { type:'finishpair' },
+      { type:'house', kind:'End · ~by 3:30–4pm', title:'🏠 Back at the House',
+        note:'You finish right at the house. All four zones complete across the trip — Fitz, Garbo, Creekside, and (via the add-on) Peak.' },
+    ],
+    aggressive:[
+      { type:'house', kind:'Start · 9:00 AM', title:'🏠 Your House — 2269 Nordic Dr',
+        note:'Ride to the Creekside Gondola base and load up — everything laps off this gondola.' },
+      { type:'lift', kind:'Lift up', title:'Creekside Gondola',
+        note:'Up into the Creek zone. Your lap lift all day.' },
+      { type:'trail', name:'Earth Circus', rating:'Blue', prog:'Creekside', meta:'blue flow · warm-up',
+        liftAfter:'Creekside Gondola',
+        note:'Quick flow warm-up before the Creek-zone blacks.' },
+      { type:'trail', name:'Insomnia', rating:'Black', prog:'Creekside', meta:'black · A-Line-style jumps then tech',
+        liftAfter:'Creekside Gondola',
+        note:'Big A-Line-style jumps up top, then a windy tech second half. The Creek zone\'s signature black, right by the house.' },
+      { type:'trail', name:'Delayed Fuse', rating:'Black', prog:'Creekside', meta:'black · creek tech',
+        liftAfter:'Creekside Gondola',
+        note:'Creek-zone black tech — quiet, rooty, raw.' },
+      { type:'optional', name:'Line of Control', rating:'Black', prog:'Creekside', meta:'optional · creek black',
+        liftAfter:'Creekside Gondola',
+        note:'Optional additional Creek-zone black for the keen.' },
+      { type:'split' },
+      { type:'finishpair' },
+      { type:'house', kind:'End · ~by 3:30–4pm', title:'🏠 Back at the House',
+        note:'Finish right at the house. All four zones complete across the trip.' },
+    ]
+  },
+};
+
+const SPLIT_TEXT = {
+  1:'<strong>Afternoon split.</strong> Wrap-early riders take a final Fitz lap and head toward the Creek zone for the ride home. Keep-riding crew grab a few more Fitz laps off the Fitzsimmons Express, then head over — no clock once you\'re up top.',
+  2:'<strong>Afternoon split.</strong> Wrap-early riders drop into Creekside via the verified connector. Keep-riding crew grab bonus Garbo laps off the Garbanzo Express, then take the connector into the Creek zone before ~4pm dinner.',
+  3:'<strong>Afternoon split.</strong> Wrap-early riders take a final Creek-zone lap and roll to the door. Keep-riding crew lap the Creekside Gondola a bit more, then finish to the house.',
+};
+
+// Lunch inserted mid-route; both options shown so the group picks day-of.
+const LUNCH = {
+  1:{ kind:'Lunch · ~12:30pm', title:'On-mountain day (keep the laps going)',
+      mountain:'<strong>Garbo\'s Grill</strong> or <strong>GLC</strong> at the Fitz mid-station — quick, right by the lift so you barely break rhythm.',
+      town:'<strong>Creekside Village</strong> at the base (Dusty\'s BBQ) — a short ride down if you\'d rather sit. You\'re right there at the end of the day anyway.' },
+  2:{ kind:'Lunch · ~12:30pm', title:'Town day (longer sit-down)',
+      mountain:'<strong>Garbo\'s Grill</strong> mid-mountain if the tech is flowing and nobody wants to stop.',
+      town:'<strong>Creekside Village / Dusty\'s</strong> — ride down for a proper break, then lift back up for the afternoon. Easy since you finish at Creekside.' },
+  3:{ kind:'Lunch · ~1:00pm (after Top of the World)', title:'Big-descent day — refuel after the Peak',
+      mountain:'<strong>Roundhouse Lodge</strong> (Fitz mid-station, 1,850 m) on the way back from the Peak — the classic on-mountain stop.',
+      town:'<strong>Dusty\'s at Creekside</strong> — if you\'d rather descend fully and eat at the base before afternoon Creekside laps.' },
+};
+
+// Afternoon laps — now full step lists per lane (mountain-lunch vs town-lunch) per mode,
+// so each lane renders detailed trail→lift steps exactly like the morning. Verified
+// trails + liftAfter on every run. ~12:45–3:30 is roughly 4–6 Fitz/Creek laps, fewer in Garbo.
+const AFTERNOON = {
+  1:{
+    span:'~12:45–3:30pm · roughly 4–6 Fitz laps',
+    mellow:{
+      mountainSteps:[
+        { type:'lunch', kind:'🍔 Lunch · on the mountain', title:'Garbo\'s Grill / GLC (Fitz mid-station)', single:true,
+          note:'Quick bite right by the Fitzsimmons Express so you barely break rhythm.' },
+        { type:'trail', name:'B-Line', rating:'Blue', prog:'FB-1', meta:'blue · re-lap', liftAfter:'Fitzsimmons Express',
+          note:'Roll straight back into laps — no transfer needed, you\'re already mid-mountain.' },
+        { type:'trail', name:'Crank It Up', rating:'Blue', prog:'FB-2', meta:'blue · flow', liftAfter:'Fitzsimmons Express',
+          note:'Session the features now that you\'re warm.' },
+        { type:'trail', name:'Heart of Darkness', rating:'Blue', prog:'FB-2', meta:'blue · flow', liftAfter:'Fitzsimmons Express',
+          note:'Long flowy blue — lap it as many times as the legs want.' },
+      ],
+      townSteps:[
+        { type:'lunch', kind:'🍔 Lunch · in town', title:'Creekside Village / Dusty\'s', single:true,
+          note:'Rode down to the base for a proper sit-down lunch.' },
+        { type:'lift', kind:'Re-up', title:'Creekside Gondola → Fitzsimmons Express',
+          note:'Re-up the Creekside Gondola, then get back over to the Fitz zone.' },
+        { type:'trail', name:'Earth Circus', rating:'Blue', prog:'Creekside', meta:'blue · warm back in', liftAfter:'Creekside Gondola',
+          note:'A quick Creek-zone flow lap to warm back in before transferring.' },
+        { type:'trail', name:'Crank It Up', rating:'Blue', prog:'FB-2', meta:'blue · flow', liftAfter:'Fitzsimmons Express',
+          note:'A couple more Fitz flow laps before heading home.' },
+      ]
+    },
+    aggressive:{
+      mountainSteps:[
+        { type:'lunch', kind:'🍔 Lunch · on the mountain', title:'Garbo\'s Grill / GLC (Fitz mid-station)', single:true,
+          note:'Fast bite by the lift — keep the session going.' },
+        { type:'trail', name:'A-Line', rating:'Black', prog:'FA-1', meta:'black freeride · session it', liftAfter:'Fitzsimmons Express',
+          note:'This is the zone to lap hard — repeat the icon as many times as you like.' },
+        { type:'trail', name:'Dirt Merchant', rating:'Black', prog:'FA-1', meta:'black freeride · rock + flow', liftAfter:'Fitzsimmons Express',
+          note:'Alternate with A-Line for variety on the rock slabs.' },
+        { type:'trail', name:'Crank It Up', rating:'Blue', prog:'FB-2', meta:'blue · cooldown flow', liftAfter:'Fitzsimmons Express',
+          note:'Spin a flow lap between black laps to rest the hands.' },
+      ],
+      townSteps:[
+        { type:'lunch', kind:'🍔 Lunch · in town', title:'Creekside Village / Dusty\'s', single:true,
+          note:'Descended to the base to refuel.' },
+        { type:'lift', kind:'Re-up', title:'Creekside Gondola → Fitzsimmons Express',
+          note:'Re-up Creekside, then transfer back to the Fitz zone.' },
+        { type:'trail', name:'Earth Circus', rating:'Blue', prog:'Creekside', meta:'blue · warm back in', liftAfter:'Creekside Gondola',
+          note:'Warm the legs back up before the blacks.' },
+        { type:'trail', name:'A-Line', rating:'Black', prog:'FA-1', meta:'black freeride', liftAfter:'Fitzsimmons Express',
+          note:'Back on the icon for the rest of the afternoon.' },
+      ]
+    }
+  },
+  2:{
+    span:'~12:45–3:15pm · roughly 3–4 Garbo laps (longer trails)',
+    mellow:{
+      mountainSteps:[
+        { type:'lunch', kind:'🍔 Lunch · on the mountain', title:'Garbo\'s Grill (mid-mountain)', single:true,
+          note:'Eat up top so you don\'t lose the Garbo zone.' },
+        { type:'trail', name:'Blue Velvet', rating:'Blue', prog:'GB-1', meta:'blue · fast flow', liftAfter:'Garbanzo Express',
+          note:'Re-lap the fast Garbo flow trail off the Garbanzo Express.' },
+        { type:'trail', name:'Original Sin', rating:'Black', prog:'GB-3', meta:'black tech · approachable', liftAfter:'Garbanzo Express',
+          note:'The approachable Garbo tech — re-lap to dial the rock gardens.' },
+      ],
+      townSteps:[
+        { type:'lunch', kind:'🍔 Lunch · in town', title:'Creekside Village / Dusty\'s', single:true,
+          note:'Rode down for a longer break at the base.' },
+        { type:'lift', kind:'Re-up', title:'Creekside Gondola → Garbanzo Express',
+          note:'Re-up the Creekside Gondola and reconnect to the Garbanzo Express.' },
+        { type:'trail', name:'Blue Velvet', rating:'Blue', prog:'GB-1', meta:'blue · fast flow', liftAfter:'Garbanzo Express',
+          note:'Fewer afternoon laps (Garbo trails are long) — prioritise this fast flow lap.' },
+        { type:'trail', name:'Freight Train', rating:'Black', prog:'GB-2', meta:'black freeride · jumps', liftAfter:'Garbanzo Express',
+          note:'One jump-line lap before heading toward home.' },
+      ]
+    },
+    aggressive:{
+      mountainSteps:[
+        { type:'lunch', kind:'🍔 Lunch · on the mountain', title:'Garbo\'s Grill (mid-mountain)', single:true,
+          note:'Stay up top to keep the tech menu going.' },
+        { type:'trail', name:'Freight Train', rating:'Black', prog:'GB-2', meta:'black freeride · jumps', liftAfter:'Garbanzo Express',
+          note:'Work the jump line off the Garbanzo Express.' },
+        { type:'trail', name:'Original Sin', rating:'Black', prog:'GB-3', meta:'black tech', liftAfter:'Garbanzo Express',
+          note:'Re-lap the rock gardens you dialed this morning.' },
+        { type:'trail', name:'In Deep', rating:'Black', prog:'GB-4', meta:'black tech · steep', liftAfter:'Garbanzo Express',
+          note:'Save some legs — these long tech descents are tiring.' },
+      ],
+      townSteps:[
+        { type:'lunch', kind:'🍔 Lunch · in town', title:'Creekside Village / Dusty\'s', single:true,
+          note:'Descended to the base to refuel.' },
+        { type:'lift', kind:'Re-up', title:'Creekside Gondola → Garbanzo Express',
+          note:'Re-up and reconnect to Garbo.' },
+        { type:'trail', name:'In Deep', rating:'Black', prog:'GB-4', meta:'black tech · headline', liftAfter:'Garbanzo Express',
+          note:'Target the headline tech first — fewer but longer laps after a town break.' },
+        { type:'trail', name:'Original Sin', rating:'Black', prog:'GB-3', meta:'black tech', liftAfter:'Garbanzo Express',
+          note:'One more classic Garbo tech lap before home.' },
+      ]
+    }
+  },
+  3:{
+    span:'~1:30–3:30pm · Creekside laps near the base',
+    mellow:{
+      mountainSteps:[
+        { type:'lunch', kind:'🍔 Lunch · on the mountain', title:'Roundhouse Lodge (Fitz mid-station)', single:true,
+          note:'The classic on-mountain stop on the way back toward Creekside.' },
+        { type:'lift', kind:'Head to Creekside', title:'Down toward Creekside Gondola',
+          note:'Work back over to the Creek zone for mellow laps near home.' },
+        { type:'trail', name:'Earth Circus', rating:'Blue', prog:'Creekside', meta:'blue · flowy, close to home', liftAfter:'Creekside Gondola',
+          note:'Flowy and easy on tired legs — lap it off the Creekside Gondola.' },
+        { type:'trail', name:'Call Me Maybe', rating:'Blue', prog:'Creekside', meta:'blue tech', liftAfter:'Creekside Gondola',
+          note:'Mix in the blue-tech line by the Kadenwood Gondola.' },
+      ],
+      townSteps:[
+        { type:'lunch', kind:'🍔 Lunch · in town', title:'Dusty\'s at Creekside', single:true,
+          note:'Ate right at the base — you\'re already where the afternoon laps start.' },
+        { type:'lift', kind:'Re-up', title:'Creekside Gondola',
+          note:'Re-up the gondola right there at the base.' },
+        { type:'trail', name:'Earth Circus', rating:'Blue', prog:'Creekside', meta:'blue · flow', liftAfter:'Creekside Gondola',
+          note:'Lap the Creek-zone flow a couple of times before the ride home.' },
+        { type:'trail', name:'Cirque Du Soil', rating:'Blue', prog:'Creekside', meta:'blue · flow', liftAfter:'Creekside Gondola',
+          note:'Another mellow Creek blue to round out the day.' },
+      ]
+    },
+    aggressive:{
+      mountainSteps:[
+        { type:'lunch', kind:'🍔 Lunch · on the mountain', title:'Roundhouse Lodge (Fitz mid-station)', single:true,
+          note:'Refuel up high before dropping to the Creek zone tech.' },
+        { type:'lift', kind:'Head to Creekside', title:'Down toward Creekside Gondola',
+          note:'Work over to the Creek zone for the afternoon blacks.' },
+        { type:'trail', name:'Insomnia', rating:'Black', prog:'Creekside', meta:'black · jumps then tech', liftAfter:'Creekside Gondola',
+          note:'Big A-Line-style jumps then a windy tech section — right by the house.' },
+        { type:'trail', name:'Delayed Fuse', rating:'Black', prog:'Creekside', meta:'black · creek tech', liftAfter:'Creekside Gondola',
+          note:'Quiet, rooty Creek-zone tech to session.' },
+      ],
+      townSteps:[
+        { type:'lunch', kind:'🍔 Lunch · in town', title:'Dusty\'s at Creekside', single:true,
+          note:'Ate at the base — afternoon laps start right here.' },
+        { type:'lift', kind:'Re-up', title:'Creekside Gondola',
+          note:'Re-up the gondola at the base.' },
+        { type:'trail', name:'Insomnia', rating:'Black', prog:'Creekside', meta:'black · signature creek line', liftAfter:'Creekside Gondola',
+          note:'Session the Creek zone\'s signature black.' },
+        { type:'trail', name:'Earth Circus', rating:'Blue', prog:'Creekside', meta:'blue · rest lap', liftAfter:'Creekside Gondola',
+          note:'A flow lap to rest between black laps.' },
+      ]
+    }
+  }
+};
+
+// (Post-dinner nightcap defined below as NIGHTCAP; dinner is early at ~4pm.)
+// Dinner is EARLY (~4pm) back at the house. After a quick dinner, an OPTIONAL
+// nightcap lap for anyone keen — catch a late lift up if one's still running,
+// otherwise a mellow spin from the door (ride-in/ride-out, no clock on the way down).
+const DINNER = {
+  1:'Head back to the house ~4pm to clean up and eat early at 2269 Nordic Dr. Creekside Village (Dusty\'s, grocery at Nesters) is a 5-min ride for supplies or a meal out.',
+  2:'Early dinner back at the house ~4pm. Garbanzo legs will be tired — good night for a big group meal in.',
+  3:'Back to the house ~4pm — celebrate completing all four zones with dinner in. Great night for the Chef Frederic dinner if that\'s when you booked it.',
+};
+// Optional post-dinner nightcap — rendered as detailed steps like the main day:
+// ride to the gondola → up → which trail → finish on the trail to the door → house.
+const NIGHTCAP = {
+  1:{ intro:'If dinner\'s quick and the legs have something left — one mellow lap before dark. Totally optional.',
+      steps:[
+        { type:'house', kind:'From the house', title:'🏠 Pedal back to Creekside Gondola',
+          note:'Ride the short connector down to the Creekside base.' },
+        { type:'lift', kind:'Last lift up', title:'Creekside Gondola',
+          note:'Catch a late gondola up if one\'s still spinning (~6:45–7pm window). If lifts are done, skip the lift and just spin a valley trail from the door instead.' },
+        { type:'trail', name:'Earth Circus', rating:'Blue', meta:'mellow flow', finish:true, note:'An easy Creek-zone flow lap that finishes right by the house — nothing gnarly after dinner.' },
+        { type:'house', kind:'End', title:'🏠 Home for the night',
+          note:'Earth Circus drops you at the door.' },
+      ] },
+  2:{ intro:'Optional post-dinner lap for the keen — Garbo legs will be tired, so keep it short and close.',
+      steps:[
+        { type:'house', kind:'From the house', title:'🏠 Pedal back to Creekside Gondola',
+          note:'Short ride down to the Creekside base.' },
+        { type:'lift', kind:'Last lift up', title:'Creekside Gondola',
+          note:'Grab a late Creekside up-lap if a lift\'s still running; otherwise a flat valley spin from the door.' },
+        { type:'trail', name:'Earth Circus', rating:'Blue', meta:'mellow flow', finish:true, note:'A cruisy Creek-zone flow lap home to loosen the legs after a hard Garbo day.' },
+        { type:'house', kind:'End', title:'🏠 Home for the night',
+          note:'Earth Circus drops you at the door.' },
+      ] },
+  3:{ intro:'After a big day most legs are cooked — but if anyone\'s still buzzing, a sunset send-off.',
+      steps:[
+        { type:'house', kind:'From the house', title:'🏠 Pedal back to Creekside Gondola',
+          note:'Short ride down to the base.' },
+        { type:'lift', kind:'Last lift up', title:'Creekside Gondola',
+          note:'Late Creekside up-lap if a lift\'s still spinning; otherwise a mellow spin from the door.' },
+        { type:'trail', name:'Earth Circus', rating:'Blue', meta:'sunset flow lap', finish:true, note:'A relaxed Creek-zone flow lap home to close out the trip — easy on tired legs.' },
+        { type:'house', kind:'End', title:'🏠 Home for the night',
+          note:'Earth Circus drops you at the door — trip complete.' },
+      ] },
+};
+
+function renderStep(s, day){
+  if(s.type==='split'){
+    return `<div class="step"><div class="step-node">⑂</div>
+      <div class="split-box"><div class="sb-title">Group split point</div><p>${SPLIT_TEXT[day]}</p></div></div>`;
+  }
+  if(s.type==='lunch'){
+    if(s.single){
+      return `<div class="step lunch"><div class="step-node">🍔</div>
+        <div class="step-card"><div class="step-kind">${s.kind||'Lunch'}</div>
+          <div class="step-title">${s.title}</div><div class="step-note">${s.note||''}</div></div></div>`;
+    }
+    return `<div class="step lunch"><div class="step-node">🍔</div>
+      <div class="step-card"><div class="step-kind">${s.kind||'Lunch break'}</div>
+        <div class="step-title">${s.title}</div>
+        <div class="lunch-opts">
+          <div class="lunch-opt mountain"><div class="lo-head">⛰ On mountain</div><div class="lo-body">${s.mountain}</div></div>
+          <div class="lunch-opt town"><div class="lo-head">🏘 In town</div><div class="lo-body">${s.town}</div></div>
+        </div>
+      </div></div>`;
+  }
+  if(s.type==='house'){
+    return `<div class="step house"><div class="step-node">🏠</div>
+      <div class="step-card"><div class="step-kind">${s.kind}</div>
+        <div class="step-title">${s.title}</div><div class="step-note">${s.note}</div></div></div>`;
+  }
+  if(s.type==='lift'){
+    return `<div class="step lift"><div class="step-node">🚡</div>
+      <div class="step-card"><div class="step-kind">${s.kind}</div>
+        <div class="step-title">${s.title}</div><div class="step-note">${s.note}</div></div></div>`;
+  }
+  if(s.type==='optional'){
+    const ost = stripeOf(s.rating);
+    return `<div class="step trail"><div class="step-node" style="background:transparent;border:2px dashed ${ost}">+</div>
+      <div class="step-card" style="border-style:dashed;opacity:0.9">
+        <div class="step-kind" style="color:rgba(255,255,255,0.5)">Optional · skippable</div>
+        <div class="step-title">${s.name}<span class="finish-flag" style="background:rgba(255,255,255,0.08);color:#bbb;border-color:rgba(255,255,255,0.2)">optional</span></div>
+        <div class="trail-meta-row">
+          <span class="rating-pill ${ratingClass(s.rating)}">${ratingMark(s.rating)}</span>
+          ${s.prog?`<span class="prog-badge">${s.prog}</span>`:''}
+          <span class="meta-txt">${s.meta||''}</span>
+        </div>
+        <div class="step-note">${s.note||''}</div>
+        ${s.liftAfter?`<div class="lift-after">🚡 After this run: <strong>${s.liftAfter}</strong> back up</div>`:''}
+        <div class="step-links">
+          <a class="step-link l-tf" href="${tfSearch(s.name)}" target="_blank" rel="noopener">🗺 Trailforks</a>
+          <a class="step-link l-strava" href="${stravaSearch(s.name)}" target="_blank" rel="noopener">🟠 Strava</a>
+        </div>
+      </div></div>`;
+  }
+  if(s.type==='finishpair'){
+    return `<div class="step trail"><div class="step-node" style="background:linear-gradient(135deg,#2196F3 50%,#3a3a3a 50%)"></div>
+      <div class="step-card finish-pair">
+        <div class="step-kind">Ride down · finish to the door</div>
+        <div class="step-title">Finish into the Creek zone — pick your line home <span class="finish-flag">↘ to the house</span></div>
+        <div class="finish-opts">
+          <div class="finish-opt blue">
+            <div class="fo-head"><span class="rating-pill r-blue">● Blue</span> confident-blue finish</div>
+            <div class="fo-body"><strong>Earth Circus</strong> or <strong>Call Me Maybe</strong> — smooth Creek-zone flow/blue-tech that drops you right at the Creekside base by the house. No lift down.</div>
+            <div class="fo-links">
+              <a class="step-link l-tf" href="${tfSearch('Earth Circus')}" target="_blank" rel="noopener">🗺 Earth Circus</a>
+              <a class="step-link l-tf" href="${tfSearch('Call Me Maybe')}" target="_blank" rel="noopener">🗺 Call Me Maybe</a>
+            </div>
+          </div>
+          <div class="finish-opt black">
+            <div class="fo-head"><span class="rating-pill r-black">◆ Black</span> confident-rider finish</div>
+            <div class="fo-body"><strong>Insomnia</strong> — big A-Line-style jumps up top then a windy tech section, landing in the Creek zone by the house. The house-adjacent trails here are black, so this is the "ride to the very door" line for strong riders.</div>
+            <div class="fo-links">
+              <a class="step-link l-tf" href="${tfSearch('Insomnia')}" target="_blank" rel="noopener">🗺 Insomnia</a>
+              <a class="step-link l-strava" href="${stravaSearch('Insomnia')}" target="_blank" rel="noopener">🟠 Strava</a>
+            </div>
+          </div>
+        </div>
+        <div class="step-note" style="margin-top:9px">Everyone funnels into the Creek zone to get home — these are the verified trails that reach the Creekside base. No lift down; you ride to the door.</div>
+      </div></div>`;
+  }
+  const stripe = stripeOf(s.rating);
+  return `<div class="step trail"><div class="step-node" style="background:${stripe}"></div>
+    <div class="step-card">
+      <div class="step-kind">Ride down${s.finish?' · finish':''}</div>
+      <div class="step-title">${s.name}${s.finish?'<span class="finish-flag">↘ ride down to base</span>':''}</div>
+      <div class="trail-meta-row">
+        <span class="rating-pill ${ratingClass(s.rating)}">${ratingMark(s.rating)}</span>
+        ${s.prog?`<span class="prog-badge">${s.prog}</span>`:''}
+        <span class="meta-txt">${s.meta||''}</span>
+      </div>
+      <div class="step-note">${s.note||''}</div>
+      ${s.liftAfter?`<div class="lift-after">🚡 After this run: <strong>${s.liftAfter}</strong> back up</div>`:''}
+      <div class="step-links">
+        <a class="step-link l-tf" href="${tfSearch(s.name)}" target="_blank" rel="noopener">🗺 Trailforks</a>
+        <a class="step-link l-strava" href="${stravaSearch(s.name)}" target="_blank" rel="noopener">🟠 Strava</a>
+      </div>
+    </div></div>`;
+}
+
+let currentMode = 'mellow';
+let currentDayNum = '1';
+
+// Full list of every named trail for the day, across BOTH modes, deduped.
+function buildTrailList(d){
+  const day = DAYS[d]; if(!day) return '';
+  const seen = new Map(); // name -> rating
+  ['mellow','aggressive'].forEach(m=>{
+    (day[m]||[]).forEach(s=>{
+      if((s.type==='trail'||s.type==='optional') && s.name && !s.finish){
+        if(!seen.has(s.name)) seen.set(s.name, s.rating);
+      }
+    });
+  });
+  if(seen.size===0) return '';
+  const chips = [...seen.entries()].map(([name,rating])=>{
+    const dot = stripeOf(rating);
+    return `<span class="tl-chip"><span class="tl-dot" style="background:${dot}"></span>${name}</span>`;
+  }).join('');
+  return `<div class="trail-list">
+    <div class="tl-title">Today's trails <span class="tl-sub">· all options, both modes</span></div>
+    <div class="tl-chips">${chips}</div>
+  </div>`;
+}
+
+function buildNightcap(d){
+  const nc = NIGHTCAP[d]; if(!nc) return '';
+  const stepsHTML = nc.steps.map(s=>renderStep(s,d)).join('');
+  return `<div class="evening-box">
+    <div class="eb-title">🌙 Optional nightcap lap <span class="eb-tag">if dinner's quick</span></div>
+    <p>${nc.intro}</p>
+    <div class="route" style="margin-top:10px">${stepsHTML}</div>
+    <p class="eb-warn">⚠ The lift time only caps your last ride <em>up</em> — once you're at the top you ride down to the door on your own time. Creekside's last up-lift is likely ~6:45–7pm in late August (earlier than the ~8pm earlier-summer hours); confirm the exact 2026 time in the Epic app day-of.</p>
+  </div>`;
+}
+
+function build(){
+  const host = document.getElementById('days');
+  host.innerHTML = Object.keys(DAYS).map(d=>{
+    const day = DAYS[d]; const zl = ZONE_LABEL[d];
+    const allSteps = (day[currentMode] || []).slice();
+    // Split the mode's steps at the `split` marker:
+    //   morning = shared steps before the fork
+    //   home    = shared finish (connector + Creek-zone finish pair + house) after the fork
+    const splitIdx = allSteps.findIndex(s=>s.type==='split');
+    const morning = splitIdx>=0 ? allSteps.slice(0, splitIdx) : allSteps;
+    const home    = splitIdx>=0 ? allSteps.slice(splitIdx+1) : [];
+
+    const lunch = LUNCH[d];
+    const aft = AFTERNOON[d] || null;
+    const aftMode = aft ? aft[currentMode] : null;
+
+    // Two swim lanes: mountain-lunch lane vs town-lunch lane. Each now renders full
+    // detailed steps (trail → lift → next) exactly like the morning route.
+    const laneSteps = (steps)=> (steps||[]).map(s=>renderStep(s,d)).join('');
+    const laneHTML = (lunch && aftMode) ? `
+      <div class="fork-marker">
+        <div class="step-node">⑂</div>
+        <div class="fork-label">Lunch fork · ${lunch.kind||'~12:30pm'} — the group splits here</div>
+        <div class="fork-sub">${SPLIT_TEXT[d]}</div>
+      </div>
+      <div class="lanes">
+        <div class="lane mountain">
+          <div class="lane-head"><span class="lh-icon">⛰</span><div><div class="lh-title">Lane A · Lunch on the mountain</div><div class="lane-sub">keep the laps going · ${aft.span}</div></div></div>
+          <div class="lane-route">${laneSteps(aftMode.mountainSteps)}</div>
+        </div>
+        <div class="lane town">
+          <div class="lane-head"><span class="lh-icon">🏘</span><div><div class="lh-title">Lane B · Lunch in town</div><div class="lane-sub">descend to Creekside, re-up after · ${aft.span}</div></div></div>
+          <div class="lane-route">${laneSteps(aftMode.townSteps)}</div>
+        </div>
+      </div>
+      <div class="rejoin-marker">
+        <div class="step-node">⑃</div>
+        <div class="rejoin-label">Both lanes rejoin · into the Creek zone</div>
+        <div class="rejoin-sub">However you spent the afternoon, everyone funnels into the Creek zone — the only zone whose trails reach the Creekside base by the house. Pick your finish line below.</div>
+      </div>` : '';
+
+    const totwHTML = (d==='3') ? `<div class="totw-box">
+        <div class="tb-flag">Optional add-on · separate Peak ticket</div>
+        <div class="tb-title">🏔 Top of the World → Creekside (the "Mega Descent")</div>
+        <p>The bucket-list alpine descent isn't lift-park flow — its real top-to-Creekside line is a verified <strong>expert backcountry route</strong>: Top of the World → Khyber Pass → Middle of Nowhere → Kashmir → Kush → Kushy Love → Love Canal → BC's Trail (or Big Timber) → Dusty's Downhill, finishing right at Dusty's Pub in Creekside Village by the house.</p>
+        <div class="tb-trails">Black Diamond · one-direction shuttled · ~8 miles · ~3 hrs · 5,130 ft of descent. Needs a Top of the World ticket (limited daily) plus a bike-park pass. Physically and technically demanding — strong, fit riders only.</div>
+        <div class="tb-links">
+          <a class="tb-link" href="${MEGA_DESCENT_URL}" target="_blank" rel="noopener">🗺 Verified route on Trailforks</a>
+          <a class="tb-link" href="${MEGA_DESCENT_3D}" target="_blank" rel="noopener">🎬 3D fly-through tour</a>
+        </div>
+        <div class="tb-warn">⚠ This is a separate adventure from the lift-park day above — slot it in if the group wants the epic, otherwise the Creek-zone park day stands on its own.</div>
+      </div>` : '';
+
+    const trailListHTML = buildTrailList(d);
+    const dinHTML = DINNER[d] ? `<div class="dinner-box">
+        <div class="db-title">🍽 Dinner — back at the house · ~4pm</div>
+        <p>${DINNER[d]}</p>
+      </div>` : '';
+    const capHTML = buildNightcap(d);
+
+    return `<div class="day-panel ${d===currentDayNum?'active':''}" data-day="${d}">
+      <div class="day-head">
+        <h2>Day ${d}</h2>
+        <span class="zone-label" style="background:${zl.bg};color:${zl.col}">${zl.txt}</span>
+        <span class="mode-tag mode-${currentMode}">${currentMode==='mellow'?'🟦 Mellow':'⬛ Aggressive'}</span>
+      </div>
+      <div class="day-intro">${day.intro}</div>
+      ${trailListHTML}
+      ${day.prog?`<div class="prog-note">📊 ${day.prog}</div>`:''}
+      <div class="route">${morning.map(s=>renderStep(s,d)).join('')}</div>
+      ${laneHTML}
+      <div class="route">${home.map(s=>renderStep(s,d)).join('')}</div>
+      ${totwHTML}
+      ${dinHTML}
+      ${capHTML}
+    </div>`;
+  }).join('');
+}
+
+function setMode(mode, btn){
+  currentMode = mode;
+  document.querySelectorAll('.mt-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  build();
+  // keep the current day visible after rebuild
+  document.querySelectorAll('.day-panel').forEach(p=>p.classList.toggle('active', p.dataset.day===currentDayNum));
+}
+
+const DAY_ZONES = {
+  '1': ['fitz','creek'],
+  '2': ['garbo','creek'],
+  '3': ['peak','creek'],
+};
+function updateZoneTracker(day){
+  const lit = DAY_ZONES[day] || [];
+  document.querySelectorAll('.zt-chip').forEach(c=>{
+    c.classList.toggle('lit', lit.includes(c.dataset.zone));
+  });
+}
+
+function setDay(day, btn){
+  currentDayNum = day;
+  document.querySelectorAll('.day-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.day-panel').forEach(p=>p.classList.toggle('active', p.dataset.day===day));
+  updateZoneTracker(day);
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+(function detectFrame(){
+  let framed=false;
+  try { framed = window.self !== window.top; } catch(e){ framed = true; }
+  if(framed) document.body.classList.add('in-frame');
+  const fb=document.getElementById('mapFallback'), ifr=document.querySelector('.map-frame-h iframe');
+  let loaded=false;
+  ifr.addEventListener('load', ()=>{ loaded=true; if(!framed) fb.style.display='none'; });
+  setTimeout(()=>{ if(!loaded || framed) fb.style.display='flex'; }, 2500);
+  if(framed) fb.style.display='flex';
+})();
+
+build();
+updateZoneTracker('1');
+</script>
+</body>
+</html>
